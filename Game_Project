@@ -1,0 +1,184 @@
+#Wendy.F
+#1/17/25
+#1-2
+
+# The game is about a bird the point of the game is that the bird has to try to get the green worms and not the red worms, the more red worms he gets he lose point while if he gets more of the green worms he gets more score,You are able to move the bird around with the right button and left button also th up/down buttons  each one moves the bird so it can get the GREEN worms.
+
+
+import simplegui
+import random
+
+
+current_room = "Garden"
+inventory = []
+health = 5
+worms_collected = 0
+win_condition = 5
+bird_pos = [200, 200]
+score = 0
+
+worm_count = 5
+worms = []  
+
+
+for _ in range(worm_count):
+    worms.append({
+        "pos": [random.randint(50, 350), random.randint(0, 150)],  
+        "color": random.choice(["green", "red"])  
+    })
+
+
+room_descriptions = {
+    "Garden": "A lush garden with lots of greenery. Worms are falling from the sky!"
+}
+
+
+def update_gui():
+    room_label.set_text(f"Current Room: {current_room}")
+    health_label.set_text(f"Health: {health}")
+    worm_label.set_text(f"Worms Collected: {worms_collected}")
+    score_label.set_text(f"Score: {score}")
+    event_label.set_text("")
+
+
+def draw(canvas):
+    global health
+
+   
+    canvas.draw_polygon([(0, 350), (400, 350), (400, 400), (0, 400)], 1, "Black", "Green")
+    
+    
+    canvas.draw_circle(bird_pos, 10, 1, "Red", "Yellow")  
+    canvas.draw_polygon([(bird_pos[0], bird_pos[1] + 10), 
+                         (bird_pos[0] - 15, bird_pos[1] + 30), 
+                         (bird_pos[0] + 15, bird_pos[1] + 30)], 
+                        2, "Red", "Orange")  
+
+    
+    for worm in worms:
+        
+        worm["pos"][1] += 2  
+
+       
+        if worm["pos"][1] > 400:
+            worm["pos"] = [random.randint(50, 350), 0]
+            worm["color"] = random.choice(["green", "red"])
+
+        
+        if worm["color"] == "green":
+            canvas.draw_line(worm["pos"], [worm["pos"][0], worm["pos"][1] + 10], 5, "Green")
+        else:
+            canvas.draw_line(worm["pos"], [worm["pos"][0], worm["pos"][1] + 10], 5, "Red")
+
+       
+        if (bird_pos[0] - worm["pos"][0])**2 + (bird_pos[1] - worm["pos"][1])**2 < 100:
+            if worm["color"] == "green":
+                canvas.draw_text("You collected a green worm!", (150, 200), 20, "White")
+                collect_worm(True, worm)
+            else:
+                canvas.draw_text("You collected a red worm! Game Over!", (150, 200), 20, "White")
+                lose_game()
+
+    
+    update_gui()
+
+
+def collect_worm(is_green, worm):
+    global worms_collected, score
+
+    worms_collected += 1
+
+    if is_green:
+        score += 1
+    else:
+        score -= 1
+
+    
+    worm["pos"] = [random.randint(50, 350), 0]
+    worm["color"] = random.choice(["green", "red"])
+
+    
+    if worms_collected >= win_condition:
+        event_label.set_text("You win! You collected enough worms!")
+        disable_buttons()
+
+
+def move_bird(direction):
+    global bird_pos
+    if direction == "up" and bird_pos[1] > 10:
+        bird_pos[1] -= 10
+    elif direction == "down" and bird_pos[1] < 350:
+        bird_pos[1] += 10
+    elif direction == "left" and bird_pos[0] > 10:
+        bird_pos[0] -= 10
+    elif direction == "right" and bird_pos[0] < 390:
+        bird_pos[0] += 10
+    update_gui()
+
+
+def disable_buttons():
+    frame.add_button("Up", lambda: None, 0)
+    frame.add_button("Down", lambda: None, 0)
+    frame.add_button("Left", lambda: None, 0)
+    frame.add_button("Right", lambda: None, 0)
+    frame.add_button("Search for Worms", lambda: None)
+
+
+def keydown_handler(key):
+    if key == simplegui.KEY_MAP["up"]:
+        move_bird("up")
+    elif key == simplegui.KEY_MAP["down"]:
+        move_bird("down")
+    elif key == simplegui.KEY_MAP["left"]:
+        move_bird("left")
+    elif key == simplegui.KEY_MAP["right"]:
+        move_bird("right")
+
+
+def lose_game():
+    global health
+    event_label.set_text("Game Over! You collected a red worm!")
+    health = 0
+    disable_buttons()
+    frame.add_button("Restart Game", restart_game)
+
+
+def restart_game():
+    # Reset game variables
+    global bird_pos, worms_collected, worms, score, health
+    bird_pos = [200, 200]
+    worms = [{"pos": [random.randint(50, 350), random.randint(0, 150)], "color": random.choice(["green", "red"])} for _ in range(worm_count)]
+    worms_collected = 0
+    score = 0
+    health = 5
+    update_gui()
+
+   
+    frame.add_button("Up", lambda: move_bird("up"))
+    frame.add_button("Down", lambda: move_bird("down"))
+    frame.add_button("Left", lambda: move_bird("left"))
+    frame.add_button("Right", lambda: move_bird("right"))
+    frame.add_button("Search for Worms", lambda: None)
+
+
+frame = simplegui.create_frame("Bird and Worm Adventure Game", 400, 400)
+
+room_label = frame.add_label("")
+health_label = frame.add_label("")
+worm_label = frame.add_label("")
+score_label = frame.add_label("")
+event_label = frame.add_label("")
+
+frame.set_canvas_background("SkyBlue")
+frame.set_draw_handler(draw)
+
+frame.add_button("Up", lambda: move_bird("up"))
+frame.add_button("Down", lambda: move_bird("down"))
+frame.add_button("Left", lambda: move_bird("left"))
+frame.add_button("Right", lambda: move_bird("right"))
+frame.add_button("Search for Worms", lambda: None)
+
+frame.set_keydown_handler(keydown_handler)
+
+update_gui()
+frame.start()
